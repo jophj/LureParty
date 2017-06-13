@@ -71,13 +71,23 @@ class Worker {
   }
 
   async init() {
-    this.isActive = true    
-    this.client = await login(this.account[0], this.account[1])
+    this.isActive = true
+    try {
+      console.log(`${this.account[0]} Trying login`)
+      this.client = await login(this.account[0], this.account[1])
+    }
+    catch (e) {
+      console.log(e)
+    }
     this.lures = await getLuresCount(this.client)
     console.log(`${this.account[0]} Logged in with ${this.lures} lures`)
   }
 
   async start() {
+    if (!this.client) {
+      console.log(`${this.account[0]} Not initialized (failed login?). Exiting`)
+      return
+    }
     const that = this
     while (this.lures > 0) {
       const pokestop = this.pokestopQueue.pop()
