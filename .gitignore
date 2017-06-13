@@ -1,0 +1,6 @@
+/node_modules/
+accounts.csv
+config.json
+geofences.json
+pokestops.json
+launch.json

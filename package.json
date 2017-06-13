@@ -1,0 +1,18 @@
+{
+  "name": "lureparty",
+  "version": "1.0.0",
+  "description": "Place lures everywhere!",
+  "main": "app.js",
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "geolib": "^2.0.22",
+    "pogobuf-vnext": "^2.1.1",
+    "point-in-polygon": "^1.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jop",
+  "license": "ISC"
+}
