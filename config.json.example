@@ -1,4 +1,5 @@
 {
   "hashingKey": "MyHashingKey",
-  "geoFence": "my-city"
+  "geoFence": "my-city",
+  "speedMs": 2.7
 }
