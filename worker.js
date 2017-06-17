@@ -29,7 +29,7 @@ async function login(username, password) {
 		.checkChallenge()
 		.batchCall()
 
-    return client
+  return client
 }
 
 async function getLuresCount(client) {
@@ -45,7 +45,7 @@ async function checkIfLured(client, pokestop) {
 }
 
 async function placeLure(client, pokestop) {
-  let modifierResponse = await client.addFortModifier(POGOProtos.Inventory.Item.ItemId.ITEM_TROY_DISK, pokestop.pokestop_id)
+  let modifierResponse = true // await client.addFortModifier(POGOProtos.Inventory.Item.ItemId.ITEM_TROY_DISK, pokestop.pokestop_id)
   return modifierResponse
 }
 
@@ -84,11 +84,24 @@ class Worker {
       this.isActive = false
       return
     }
+
+    let p = this.pokestopQueue.pop()
+    await this.client.setPosition(p.latitude, p.longitude)
+    const cellIDs = pogobuf.Utils.getCellIDs(p.latitude, p.longitude, 5, 17);
+    let mapObjects = await this.client.getMapObjects(cellIDs, Array(cellIDs.length).fill(0))
+    let catchablePokemons = mapObjects.map_cells
+      .map(current => current.catchable_pokemons)
+      
+    catchablePokemons = catchablePokemons.reduce((a, c) => a.concat(c), [])
+    console.log(catchablePokemons)
+
+
     this.lures = await getLuresCount(this.client)
     console.log(`${this.account[0]} Logged in with ${this.lures} lures`)
   }
 
   async start() {
+    return
     if (!this.client) {
       console.log(`${this.account[0]} Not initialized (failed login?). Exiting`)
       this.isActive = false
