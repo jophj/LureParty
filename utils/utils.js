@@ -6,10 +6,31 @@ function getWaitTime(from, to, speedMs) {
     { latitude: from[0], longitude: from[1] },
     { latitude: from[0], longitude: to[1] }
   )
-  console.log(distance)
   return distance / speedMs
+}
+
+function nearbyReducerGenerator(latitude, longitude) {
+  return (n, f) => {
+    let distance = geolib.getDistance (
+      { latitude: latitude, longitude: longitude },
+      { latitude: f.latitude, longitude: f.longitude }
+    )
+
+    if (!n || !n.distance) return {
+      distance: distance,
+      item: f
+    }
+
+    if (distance < (n.distance || Infinity)) {
+      n.item = f
+      n.distance = distance
+    }
+
+    return n
+  }
 }
 
 module.exports = {
   getWaitTime: getWaitTime,
+  nearbyReducerGenerator: nearbyReducerGenerator
 }

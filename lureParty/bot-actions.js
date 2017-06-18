@@ -23,15 +23,13 @@ async function login(username, password, hashingKey) {
 }
 
 async function getLuresCount(client) {
-  let response = await client.getInventory()
-  let inventory = pogobuf.Utils.splitInventory(response)
+  let inventory = await getInventory(client)
   let itemLure = inventory.items.find(item => POGOProtos.Inventory.Item.ItemId.ITEM_TROY_DISK === item.item_id)
   return itemLure ? itemLure.count : 0
 }
 
 async function getBallsCount(client) {
-  let response = await client.getInventory()
-  let inventory = pogobuf.Utils.splitInventory(response)
+  let inventory = await getInventory(client)
   let itemPokeBall = inventory.items.find(item => POGOProtos.Inventory.Item.ItemId.ITEM_POKE_BALL === item.item_id)
   let itemGreatBall = inventory.items.find(item => POGOProtos.Inventory.Item.ItemId.ITEM_GREAT_BALL === item.item_id)
   let itemUltraBall = inventory.items.find(item => POGOProtos.Inventory.Item.ItemId.ITEM_ULTRA_BALL === item.item_id)
@@ -40,6 +38,12 @@ async function getBallsCount(client) {
     itemGreatBall ? itemGreatBall.count : 0,
     itemUltraBall ? itemUltraBall.count : 0
   ]
+}
+
+async function getInventory(client) {
+  let response = await client.getInventory()
+  let inventory = pogobuf.Utils.splitInventory(response)
+  return inventory
 }
 
 async function checkIfLured(client, pokestop) {
@@ -88,11 +92,11 @@ async function startTutorial(client, tutorialState) {
         .fill(0)
         .reduce((c, d) => c+String.fromCharCode(Math.floor(Math.random() * (122 - 97 + 1) + 97)), '')
     let response = await client.claimCodename(codeName)
-    await client.markTutorialComplete(POGOProtos.Enums.TutorialState.NAME_SELECTION)    
+    await client.markTutorialComplete(POGOProtos.Enums.TutorialState.NAME_SELECTION)
   }
 
   if (tutorialState.indexOf(POGOProtos.Enums.TutorialState.FIRST_TIME_EXPERIENCE_COMPLETE) < 0) {
-    await client.markTutorialComplete(POGOProtos.Enums.TutorialState.FIRST_TIME_EXPERIENCE_COMPLETE)    
+    await client.markTutorialComplete(POGOProtos.Enums.TutorialState.FIRST_TIME_EXPERIENCE_COMPLETE)
   }
 }
 
@@ -116,7 +120,7 @@ async function catchPokemon(client, catchablePokemon, ballsCount) {
   let pokeballItemID = [
     POGOProtos.Inventory.Item.ItemId.ITEM_POKE_BALL,
     POGOProtos.Inventory.Item.ItemId.ITEM_GREAT_BALL,
-    POGOProtos.Inventory.Item.ItemId.ITEM_ULTRA_BALL          
+    POGOProtos.Inventory.Item.ItemId.ITEM_ULTRA_BALL
   ][ballsCount.findIndex(c => c > 0)]
   let catchPokemonResponse = await client.catchPokemon(
     catchablePokemon.encounter_id,
@@ -132,6 +136,7 @@ async function catchPokemon(client, catchablePokemon, ballsCount) {
 
 module.exports = {
   login: login,
+  getInventory: getInventory,
   getLuresCount: getLuresCount,
   getBallsCount: getBallsCount,
   startTutorial: startTutorial,
