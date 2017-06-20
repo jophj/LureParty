@@ -1,10 +1,10 @@
 const inside = require('point-in-polygon')
-const allPokestops = require('./pokestops.json')
-const accountManager = require('./lureParty/account-manager')
+const allPokestops = require('../pokestops.json')
+const accountManager = require('./account-manager')
 const Worker = require('./worker')
 
-const config = require('./config.json')
-const geoFence = require('./geofences.json')[config.geoFence || 'default']
+const config = require('../config.json')
+const geoFence = require('../geofences.json')[config.geoFence || 'default']
 
 async function Main(params) {
   let accounts = await accountManager.importAccounts('accounts.csv')

@@ -1,7 +1,7 @@
 const geolib = require('geolib')
 const pogobuf = require('pogobuf-vnext')
 const POGOProtos = require('node-pogo-protos')
-const config = require('./config.json')
+const config = require('../config.json')
 
 function getWaitTime(from, to, speedMs) {
   if (!from || ! to) return 0
@@ -13,12 +13,20 @@ function getWaitTime(from, to, speedMs) {
 }
 
 async function login(username, password) {
+  const proxies = [
+    'http://jophj:C0mpromised@37.153.168.215:80',
+    'http://jophj:C0mpromised@93.127.144.224:80',
+    'http://jophj:C0mpromised@185.141.164.68:80',
+    'http://jophj:C0mpromised@93.127.159.229:80',
+    'http://jophj:C0mpromised@93.127.146.132:80',
+  ]
   let client = new pogobuf.Client({
 		authType: 'ptc',
 		username: username,
 		password: password,
 		hashingKey: config.hashingKey,
 		useHashingServer: true,
+    proxy: proxies[Math.floor(Math.random() * 5)]
 	})
 
 	await client.init()
@@ -84,10 +92,6 @@ class Worker {
       return
     }
 
-    let p = this.pokestopQueue.pop()
-    if (!p) return
-    await this.client.setPosition(p.latitude, p.longitude)
-    const cellIDs = pogobuf.Utils.getCellIDs(p.latitude, p.longitude, 5, 17);
     this.lures = await getLuresCount(this.client)
     console.log(`${this.account[0]} Logged in with ${this.lures} lures`)
   }

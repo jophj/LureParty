@@ -2,9 +2,8 @@ const accountManager = require('../lureParty/account-manager')
 const Worker = require('./worker')
 const config = require('../config.json')
 
-// ptc,rocketMapPO1191,R0cketMap!
 async function Main() {
-  let accounts = await accountManager.importAccounts('accounts.csv')
+  let accounts = await accountManager.importAccounts('./accounts.csv')
   const workers = accounts.map(a => new Worker(a, config.speedMs, config.hashingKey))
   workers.forEach(async w => {
     await w.init()

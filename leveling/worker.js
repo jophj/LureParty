@@ -204,7 +204,8 @@ class Worker {
     await startFarmingUntil(this.client, expToGain, this.speedMs)
     this.isActive = false
     const inventory = await botActions.getInventory(this.client)
-    await this.client.levelUpRewards(inventory.player.level)
+    let levelUpResponse = await this.client.levelUpRewards(inventory.player.level)
+    await Promise.delay(Math.random() * 500 + 5500)
     await this.client.cleanUp()
     console.log(`${this.account[0]} Ends with ${inventory.player.experience} experience`)
   }
