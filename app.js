@@ -1,6 +1,6 @@
 const inside = require('point-in-polygon')
 const allPokestops = require('./pokestops.json')
-const accountManager = require('./account-manager')
+const accountManager = require('./lureParty/account-manager')
 const Worker = require('./worker')
 
 const config = require('./config.json')

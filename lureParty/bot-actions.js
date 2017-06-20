@@ -104,7 +104,7 @@ async function moveTo(client, latitude, longitude, speedMs) {
   const waitTimeSeconds = utils.getWaitTime(
     [latitude, longitude],
     [client.playerLatitude, client.playerLongitude],
-    this.speedMs
+    speedMs
   )
 
   return new Promise((res) => {

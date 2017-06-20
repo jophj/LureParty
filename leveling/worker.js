@@ -4,18 +4,18 @@ const POGOProtos = require('node-pogo-protos')
 const botActions = require('../lureParty/bot-actions')
 const utils = require('../utils/utils')
 const Promise = require('bluebird')
+const StateMachine = require('../lureParty/state-machine')
 
-async function startFarmingUntil(client, totalExp, speedMs) {
-  if (!client.playerLatitude || !client.playerLongitude) {
-    return -1
-  }
+function updateFortList(oldForts, newData) {
+  const fortsToAdd = newData.filter(f => !oldForts.find(of => of.id === f.id))
+  Array.prototype.push.apply(oldForts, fortsToAdd)
+}
 
-  const wildPokemonList = []
-  const fortList = []
-  while (totalExp > 0) {
-
-    let ballsCount = await botActions.getBallsCount(client)
-    let luresCount = await botActions.getLuresCount(client)
+async function getBotData(client) {
+    let inventory = await botActions.getInventory(client)
+    let itemPokeBall = inventory.items.find(item => POGOProtos.Inventory.Item.ItemId.ITEM_POKE_BALL === item.item_id)
+    let itemGreatBall = inventory.items.find(item => POGOProtos.Inventory.Item.ItemId.ITEM_GREAT_BALL === item.item_id)
+    let itemUltraBall = inventory.items.find(item => POGOProtos.Inventory.Item.ItemId.ITEM_ULTRA_BALL === item.item_id)
 
     const cellIDs = pogobuf.Utils.getCellIDs(client.playerLatitude, client.playerLongitude, 5, 17)
     let mapObjects = await client.getMapObjects(cellIDs, Array(cellIDs.length).fill(0))
@@ -32,35 +32,109 @@ async function startFarmingUntil(client, totalExp, speedMs) {
       .map(current => current.wild_pokemons)
     wildPokemons = wildPokemons.reduce((a, c) => a.concat(c), [])
 
-    wildPokemons.forEach(wp => {
-      if (!wildPokemonList.find(e => e.encounter_id === wp.encounter_id)) {
-        wildPokemonList.push(wp)
-      }
-    })
+    return {
+      pokeBallCount: itemPokeBall ? itemPokeBall.count : 0,
+      greatBallCount: itemGreatBall ? itemGreatBall.count : 0,
+      ultraBallCount: itemUltraBall ? itemUltraBall.count : 0,
+      forts,
+      catchablePokemons,
+      wildPokemons,
+      experience: inventory.player.experience
+    }
+}
 
-    forts.forEach(wp => {
-      if (!fortList.find(e => e.id === wp.id)) {
-        fortList.push(wp)
-      }
-    })
+async function startFarmingUntil(client, expToGain, speedMs) {
+  if (!client.playerLatitude || !client.playerLongitude) {
+    return -1
+  }
 
-    if (wildPokemons.length + forts.length === 0) {
+  let botData = await getBotData(client)
+  let wildPokemonList = botData.wildPokemons
+  const fortList = botData.forts
+  let ballCount = [ botData.pokeBallCount, botData.greatBallCount, botData.ultraBallCount ].reduce(reduceSum)
+
+  const transitions = [
+    { from: 'start', to: 'end', condition: () => botData.experience >= expToGain },
+    { from: 'start', to: 'catch', condition: () => botData.experience < expToGain && ballCount >= 12 && botData.catchablePokemons.length > 0 },
+    { from: 'start', to: 'farm', condition: () => botData.experience < expToGain && ballCount < 12 },
+    { from: 'start', to: 'farm', condition: () => botData.experience < expToGain && botData.catchablePokemons.length === 0 && wildPokemonList.length === 0 },
+    { from: 'start', to: 'hunt', condition: () => botData.experience < expToGain && ballCount >= 12 && botData.catchablePokemons.length === 0 && wildPokemonList.length > 0  },
+    { from: 'catch', to: 'end', condition: () => botData.experience >= expToGain },
+    { from: 'catch', to: 'catch', condition: () => botData.experience < expToGain && ballCount >= 12 && botData.catchablePokemons.length > 0 },
+    { from: 'catch', to: 'farm', condition: () => botData.experience < expToGain && ballCount < 12 },
+    { from: 'catch', to: 'farm', condition: () => botData.experience < expToGain && botData.catchablePokemons.length === 0 && wildPokemonList.length === 0 },
+    { from: 'catch', to: 'hunt', condition: () => botData.experience < expToGain && ballCount >= 12 && botData.catchablePokemons.length === 0 && wildPokemonList.length > 0 },
+    { from: 'farm', to: 'end', condition: () => botData.experience >= expToGain },
+    { from: 'farm', to: 'farm', condition: () => botData.experience < expToGain && ballCount < 12 },
+    { from: 'farm', to: 'farm', condition: () => botData.experience < expToGain && botData.catchablePokemons.length === 0 && wildPokemonList.length === 0 },
+    { from: 'farm', to: 'catch', condition: () => botData.experience < expToGain && ballCount >= 12 && botData.catchablePokemons.length > 0 },
+    { from: 'farm', to: 'hunt', condition: () => botData.experience < expToGain && ballCount >= 12 && botData.catchablePokemons.length === 0 && wildPokemonList.length > 0 },
+    { from: 'hunt', to: 'end', condition: () => botData.experience >= expToGain },
+    { from: 'hunt', to: 'hunt', condition: () => botData.experience < expToGain && ballCount >= 12 && botData.catchablePokemons.length === 0 && wildPokemonList.length > 0 },
+    { from: 'hunt', to: 'catch', condition: () => botData.experience < expToGain && ballCount >= 12 && botData.catchablePokemons.length > 0 },
+    { from: 'hunt', to: 'farm', condition: () => botData.experience < expToGain && ballCount < 12 },
+    { from: 'hunt', to: 'farm', condition: () => botData.experience < expToGain && botData.catchablePokemons.length === 0 && wildPokemonList.length === 0 },
+  ]
+  const stateMachine = new StateMachine(transitions, 'start')
+  stateMachine.transition()
+
+  while (stateMachine.currentState !== 'end') {
+
+    console.log(`${client.options.username} State: ${stateMachine.currentState}`)
+
+    if (botData.wildPokemons.length + botData.forts.length === 0) {
       console.log('ERROR: received no items from scan. Try to lower request rate')
       await Promise.delay(Math.random() * 500 + 5500)
     }
 
-    while (ballsCount.reduce(reduceSum) >= 12 && catchablePokemons.length > 0 && totalExp > 0) {
-      console.log("Catching pokemon")
-      let catchablePokemon = catchablePokemons.pop()
-      let captureResponse = await botActions.catchPokemon(client, catchablePokemon, ballsCount)
+    if (stateMachine.currentState === 'catch') {
+      console.log(`${client.options.username} catching pokemon`)
+      let catchablePokemon = botData.catchablePokemons.pop()
+      let captureResponse = await botActions.catchPokemon(client, catchablePokemon, [ botData.pokeBallCount, botData.greatBallCount, botData.ultraBallCount ])
       const expGained = captureResponse.capture_award.xp.reduce(reduceSum, 0)
-      totalExp -= expGained
-      console.log("Pokemon catched. Exp Gained", expGained)
+      console.log(`${client.options.username} Pokemon catched. Exp gained: ${expGained}. Total exp: ${botData.experience + expGained}`)
       await Promise.delay(Math.random() * 500 + 2500)
+
+      let inventory = await botActions.getInventory(client)
+      let itemPokeBall = inventory.items.find(item => POGOProtos.Inventory.Item.ItemId.ITEM_POKE_BALL === item.item_id)
+      let itemGreatBall = inventory.items.find(item => POGOProtos.Inventory.Item.ItemId.ITEM_GREAT_BALL === item.item_id)
+      let itemUltraBall = inventory.items.find(item => POGOProtos.Inventory.Item.ItemId.ITEM_ULTRA_BALL === item.item_id)
+      botData.pokeBallCount = itemPokeBall ? itemPokeBall.count : 0
+      botData.greatBallCount = itemGreatBall ? itemGreatBall.count : 0
+      botData.ultraBallCount = itemUltraBall ? itemUltraBall.count : 0
+      botData.experience = inventory.player.experience
     }
 
-    if (ballsCount.reduce(reduceSum) >= 12 && wildPokemonList.length > 0) {
-      console.log("No catchable pokemon. Hunting nearby")
+    if (stateMachine.currentState === 'farm') {
+      if (fortList.length === 0) {
+        console.log(`${client.options.username} ERROR: no nearby pokestop. Can\'t farm`)
+      }
+
+      let nearbyFort = fortList
+        .filter(f => f.cooldown_complete_timestamp_ms === 0 || !f.spinned)
+        .reduce(
+          utils.nearbyReducerGenerator(client.playerLatitude, client.playerLongitude),
+          {})
+      nearbyFort = nearbyFort.item
+      await botActions.moveTo(client, nearbyFort.latitude, nearbyFort.longitude, speedMs)
+      await Promise.delay(Math.random() * 500 + 2500)      
+      const response = await client.fortSearch(nearbyFort.id, nearbyFort.latitude, nearbyFort.longitude)
+      if (response.result === 1) {
+        nearbyFort.spinned = true
+        console.log(`${client.options.username} Spinned pokestop: ${nearbyFort.id}`)
+      }
+      else {
+        console.log(`${client.options.username} Not spinned: ${nearbyFort.id}. Response result: ${response.result}`)
+      }
+      await Promise.delay(Math.random() * 500 + 2500)
+
+      botData = await getBotData(client)
+      updateFortList(fortList, botData.forts)
+      await Promise.delay(Math.random() * 500 + 1500)
+    }
+
+    if (stateMachine.currentState === 'hunt') {
+      console.log(`${client.options.username} No catchable pokemon. Hunting nearby`)
       const nearbyPokemon = wildPokemonList.reduce(
         utils.nearbyReducerGenerator(client.playerLatitude, client.playerLongitude),
         {})
@@ -68,25 +142,14 @@ async function startFarmingUntil(client, totalExp, speedMs) {
       wildPokemonList.splice(i, 1)
       await botActions.moveTo(client, nearbyPokemon.item.latitude, nearbyPokemon.item.longitude, speedMs)
       await Promise.delay(Math.random() * 500 + 5500)
+      botData = await getBotData(client)
+      wildPokemonList = botData.wildPokemons 
     }
-    else if (ballsCount.reduce(reduceSum) < 12 || catchablePokemons.length === 0) {
-      console.log("Few balls. Spinning pokestop")
-      if (fortList.length === 0) {
-        console.log('ERROR: no nearby pokestop. Can\'t do anything')
-      }
-      let nearbyFort = fortList
-        .filter(f => f.cooldown_complete_timestamp_ms === 0)
-        .reduce(
-          utils.nearbyReducerGenerator(client.playerLatitude, client.playerLongitude),
-          {})
-      nearbyFort = nearbyFort.item
 
-      await botActions.moveTo(client, nearbyFort.latitude, nearbyFort.longitude, speedMs)
-      await client.fortSearch(nearbyFort.id, nearbyFort.latitude, nearbyFort.longitude)
-      await Promise.delay(Math.random() * 500 + 5500)
-    }
+
+    stateMachine.transition()
   }
-  console.log("Farming done")
+  console.log(`${client.options.username} Farming done`)
 }
 
 function reduceSum(accumulator, value) {
@@ -132,7 +195,9 @@ class Worker {
 
     let player = await this.client.getPlayer('US', 'en', 'Europe/Paris')
     if (player.player_data.tutorial_state.length < 6) {
+      console.log(`${this.account[0]} Starting tutorial`)
       await botActions.startTutorial(this.client, player.player_data.tutorial_state)
+      console.log(`${this.account[0]} Tutorial finished`)
     }
     await this.client.setPosition(latitude, longitude)
 
