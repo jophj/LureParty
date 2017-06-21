@@ -13,19 +13,20 @@ function getWaitTime(from, to, speedMs) {
 }
 
 class Worker {
-  constructor(account, pokestopQueue, speedMs, hashingKey) {
+  constructor(account, pokestopQueue, speedMs, hashingKey, proxy) {
     this.account = account
     this.pokestopQueue = pokestopQueue
     this.lastPosition = null
     this.speedMs = speedMs
     this.hashingKey = hashingKey
+    this.proxy = proxy
   }
 
   async init() {
     this.isActive = true
     try {
       console.log(`${this.account[0]} Trying login`)
-      this.client = await botActions.login(this.account[0], this.account[1], this.hashingKey)
+      this.client = await botActions.initClient(this.account[0], this.account[1], this.hashingKey, this.proxy)
     }
     catch (e) {
       console.log(e)

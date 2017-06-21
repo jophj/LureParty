@@ -162,18 +162,19 @@ function reduceSum(accumulator, value) {
 }
 
 class Worker {
-  constructor(account, speedMs, hashingKey) {
+  constructor(account, speedMs, hashingKey, proxy) {
     this.account = account
     this.lastPosition = null
     this.speedMs = speedMs
     this.hashingKey = hashingKey
+    this.proxy = proxy
   }
 
   async init(latitude, longitude) {
     this.isActive = true
     try {
       console.log(`${this.account[0]} Trying login`)
-      this.client = await botActions.login(this.account[0], this.account[1], this.hashingKey)
+      this.client = await botActions.initClient(this.account[0], this.account[1], this.hashingKey, this.proxy)
     }
     catch (e) {
       this.client = null

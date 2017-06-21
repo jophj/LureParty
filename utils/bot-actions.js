@@ -2,13 +2,14 @@ const pogobuf = require('pogobuf-vnext')
 const POGOProtos = require('node-pogo-protos')
 const utils = require('./utils')
 
-async function login(username, password, hashingKey) {
+async function initClient(username, password, hashingKey, proxy) {
   let client = new pogobuf.Client({
 		authType: 'ptc',
 		username: username,
 		password: password,
 		hashingKey: hashingKey,
 		useHashingServer: true,
+    proxy: proxy
 	})
 
 	await client.init()
@@ -137,7 +138,7 @@ async function catchPokemon(client, catchablePokemon, ballsCount) {
 }
 
 module.exports = {
-  login: login,
+  initClient: initClient,
   getInventory: getInventory,
   getLuresCount: getLuresCount,
   getBallsCount: getBallsCount,

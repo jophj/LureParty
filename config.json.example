@@ -2,5 +2,9 @@
   "hashingKey": "MyHashingKey",
   "geoFence": "my-city",
   "location": [ 44.773162, 10.254497 ],
-  "speedMs": 2.7
+  "speedMs": 2.7,
+  "proxies": [
+    "http://username:password@123.123.123.123:80",
+    "http://124.124.124.124:80",
+  ]
 }
