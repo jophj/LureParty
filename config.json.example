@@ -1,5 +1,6 @@
 {
   "hashingKey": "MyHashingKey",
   "geoFence": "my-city",
+  "location": [ 44.773162, 10.254497 ],
   "speedMs": 2.7
 }

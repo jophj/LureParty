@@ -1,7 +1,6 @@
 const pogobuf = require('pogobuf-vnext')
 const POGOProtos = require('node-pogo-protos')
-
-const utils = require('../utils/utils')
+const utils = require('./utils')
 
 async function login(username, password, hashingKey) {
   let client = new pogobuf.Client({
@@ -101,11 +100,14 @@ async function startTutorial(client, tutorialState) {
 }
 
 async function moveTo(client, latitude, longitude, speedMs) {
-  const waitTimeSeconds = utils.getWaitTime(
-    [latitude, longitude],
-    [client.playerLatitude, client.playerLongitude],
-    speedMs
-  )
+  let waitTimeSeconds = 0
+  if (client.playerLatitude && client.playerLongitude) {
+    waitTimeSeconds = utils.getWaitTime(
+      [latitude, longitude],
+      [client.playerLatitude, client.playerLongitude],
+      speedMs
+    )
+  }
 
   return new Promise((res) => {
     setTimeout(async () => {
@@ -141,5 +143,7 @@ module.exports = {
   getBallsCount: getBallsCount,
   startTutorial: startTutorial,
   catchPokemon: catchPokemon,
-  moveTo: moveTo
+  moveTo: moveTo,
+  checkIfLured: checkIfLured,
+  placeLure: placeLure
 }

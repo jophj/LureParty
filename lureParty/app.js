@@ -1,6 +1,6 @@
 const inside = require('point-in-polygon')
 const allPokestops = require('../pokestops.json')
-const accountManager = require('./account-manager')
+const accountManager = require('../utils/account-manager')
 const Worker = require('./worker')
 
 const config = require('../config.json')
@@ -12,7 +12,7 @@ async function Main(params) {
   const pokestops = allPokestops.filter(p => inside([p.latitude, p.longitude], geoFence))
   const pokestopQueue = new Queue(pokestops)
 
-  const workers = accounts.map(a => new Worker(a, pokestopQueue, config.speedMs))
+  const workers = accounts.map(a => new Worker(a, pokestopQueue, config.speedMs, config.hashingKey))
   workers.forEach(async w => {
     await w.init()
     w.start()

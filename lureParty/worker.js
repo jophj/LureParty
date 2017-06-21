@@ -1,7 +1,7 @@
 const geolib = require('geolib')
 const pogobuf = require('pogobuf-vnext')
 const POGOProtos = require('node-pogo-protos')
-const config = require('../config.json')
+const botActions = require('../utils/bot-actions')
 
 function getWaitTime(from, to, speedMs) {
   if (!from || ! to) return 0
@@ -12,76 +12,20 @@ function getWaitTime(from, to, speedMs) {
   return distance / speedMs
 }
 
-async function login(username, password) {
-  const proxies = [
-    'http://jophj:C0mpromised@37.153.168.215:80',
-    'http://jophj:C0mpromised@93.127.144.224:80',
-    'http://jophj:C0mpromised@185.141.164.68:80',
-    'http://jophj:C0mpromised@93.127.159.229:80',
-    'http://jophj:C0mpromised@93.127.146.132:80',
-  ]
-  let client = new pogobuf.Client({
-		authType: 'ptc',
-		username: username,
-		password: password,
-		hashingKey: config.hashingKey,
-		useHashingServer: true,
-    proxy: proxies[Math.floor(Math.random() * 5)]
-	})
-
-	await client.init()
-	await client.getPlayer('US', 'en', 'Europe/Paris')
-	let response = await client.batchStart()
-		.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', 6301)
-		.checkChallenge()
-		.batchCall()
-
-  return client
-}
-
-async function getLuresCount(client) {
-  let response = await client.getInventory()
-  let inventory = pogobuf.Utils.splitInventory(response)
-  let itemLure = inventory.items.find(item => POGOProtos.Inventory.Item.ItemId.ITEM_TROY_DISK === item.item_id)
-  return itemLure ? itemLure.count : 0
-}
-
-async function checkIfLured(client, pokestop) {
-  let response = await client.fortDetails(pokestop.pokestop_id, pokestop.latitude, pokestop.longitude)
-  return response.modifiers && response.modifiers.length > 0
-}
-
-async function placeLure(client, pokestop) {
-  let modifierResponse = await client.addFortModifier(POGOProtos.Inventory.Item.ItemId.ITEM_TROY_DISK, pokestop.pokestop_id)
-  return modifierResponse
-}
-
 class Worker {
-  constructor(account, pokestopQueue, speedMs) {
+  constructor(account, pokestopQueue, speedMs, hashingKey) {
     this.account = account
     this.pokestopQueue = pokestopQueue
     this.lastPosition = null
     this.speedMs = speedMs
-  }
-
-  async moveTo(client, latitude, longitude) {
-    const waitTimeSeconds = getWaitTime([latitude, longitude], this.lastPosition, this.speedMs)
-
-    return new Promise((res) => {
-      console.log(`${this.account[0]} Waiting ${waitTimeSeconds}s to move`)
-      setTimeout(async () => {
-        await client.setPosition(latitude, longitude)
-        this.lastPosition = [ latitude, longitude ]
-        res()
-      }, waitTimeSeconds * 1000)
-    })
+    this.hashingKey = hashingKey
   }
 
   async init() {
     this.isActive = true
     try {
       console.log(`${this.account[0]} Trying login`)
-      this.client = await login(this.account[0], this.account[1])
+      this.client = await botActions.login(this.account[0], this.account[1], this.hashingKey)
     }
     catch (e) {
       console.log(e)
@@ -92,7 +36,7 @@ class Worker {
       return
     }
 
-    this.lures = await getLuresCount(this.client)
+    this.lures = await botActions.getLuresCount(this.client)
     console.log(`${this.account[0]} Logged in with ${this.lures} lures`)
   }
 
@@ -110,15 +54,15 @@ class Worker {
         break
       }
       
-      let lured = await checkIfLured(this.client, pokestop)
+      let lured = await botActions.checkIfLured(this.client, pokestop)
       if (lured) {
         console.log(`${this.account[0]} Pokestop already lured. Skipping`)
         continue;
       }
 
-      await that.moveTo(this.client, pokestop.latitude, pokestop.longitude)
+      await botActions.moveTo(this.client, pokestop.latitude, pokestop.longitude, this.speedMs)
       console.log(`${this.account[0]} Placing lure at ${pokestop.pokestop_id}`)      
-      let placeLureResponse = await placeLure(this.client, pokestop)
+      let placeLureResponse = await botActions.placeLure(this.client, pokestop)
       if (placeLureResponse) {
         console.log(`${this.account[0]} Lure placed at ${pokestop.pokestop_id}`)
       }
