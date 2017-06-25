@@ -1,6 +1,6 @@
 const geolib = require('geolib')
 const pogobuf = require('pogobuf-vnext')
-const POGOProtos = require('node-pogo-protos')
+const POGOProtos = require('node-pogo-protos-vnext')
 const botActions = require('../utils/bot-actions')
 const utils = require('../utils/utils')
 const Promise = require('bluebird')

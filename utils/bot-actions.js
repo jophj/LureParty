@@ -1,5 +1,5 @@
 const pogobuf = require('pogobuf-vnext')
-const POGOProtos = require('node-pogo-protos')
+const POGOProtos = require('node-pogo-protos-vnext')
 const utils = require('./utils')
 
 async function initClient(username, password, hashingKey, proxy) {
@@ -9,7 +9,8 @@ async function initClient(username, password, hashingKey, proxy) {
 		password: password,
 		hashingKey: hashingKey,
 		useHashingServer: true,
-    proxy: proxy
+    proxy: proxy,
+    version: 6701
 	})
 
 	await client.init()

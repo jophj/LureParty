@@ -1,6 +1,5 @@
 const geolib = require('geolib')
-const pogobuf = require('pogobuf-vnext')
-const POGOProtos = require('node-pogo-protos')
+const POGOProtos = require('node-pogo-protos-vnext')
 const botActions = require('../utils/bot-actions')
 
 function getWaitTime(from, to, speedMs) {
@@ -47,7 +46,7 @@ class Worker {
       this.isActive = false
       return
     }
-    const that = this
+
     while (this.lures > 0) {
       const pokestop = this.pokestopQueue.pop()
       if (!pokestop) {
