@@ -61,7 +61,7 @@ async function startTutorial(client, tutorialState) {
   if (!tutorialState) tutorialState = []
 
   if (tutorialState.indexOf(POGOProtos.Enums.TutorialState.LEGAL_SCREEN) < 0) {
-    await client.markTutorialComplete(POGOProtos.Enums.TutorialState.LEGAL_SCREEN)
+    await client.markTutorialComplete([POGOProtos.Enums.TutorialState.LEGAL_SCREEN])
   }
 
   if (tutorialState.indexOf(POGOProtos.Enums.TutorialState.AVATAR_SELECTION) < 0) {
@@ -74,7 +74,7 @@ async function startTutorial(client, tutorialState) {
       'eyes': Math.floor(Math.random() * (4 - 1 + 1) + 1),
       'backpack': Math.floor(Math.random() * (5 - 1 + 1) + 1)
     })
-    await client.markTutorialComplete(POGOProtos.Enums.TutorialState.AVATAR_SELECTION)
+    await client.markTutorialComplete([POGOProtos.Enums.TutorialState.AVATAR_SELECTION])
   }
 
   if (tutorialState.indexOf(POGOProtos.Enums.TutorialState.POKEMON_CAPTURE) < 0) {
@@ -93,11 +93,11 @@ async function startTutorial(client, tutorialState) {
         .fill(0)
         .reduce((c, d) => c+String.fromCharCode(Math.floor(Math.random() * (122 - 97 + 1) + 97)), '')
     let response = await client.claimCodename(codeName)
-    await client.markTutorialComplete(POGOProtos.Enums.TutorialState.NAME_SELECTION)
+    await client.markTutorialComplete([POGOProtos.Enums.TutorialState.NAME_SELECTION])
   }
 
   if (tutorialState.indexOf(POGOProtos.Enums.TutorialState.FIRST_TIME_EXPERIENCE_COMPLETE) < 0) {
-    await client.markTutorialComplete(POGOProtos.Enums.TutorialState.FIRST_TIME_EXPERIENCE_COMPLETE)
+    await client.markTutorialComplete([POGOProtos.Enums.TutorialState.FIRST_TIME_EXPERIENCE_COMPLETE])
   }
 }
 
