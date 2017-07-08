@@ -10,7 +10,7 @@ async function initClient(username, password, hashingKey, proxy) {
 		hashingKey: hashingKey,
 		useHashingServer: true,
     proxy: proxy,
-    version: 6701
+    version: 6702
 	})
 
 	await client.init()
