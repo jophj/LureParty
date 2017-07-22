@@ -15,10 +15,9 @@ async function Main(params) {
 
   const proxy = proxyManager.getProxy()
   const workers = accounts.map(a => new Worker(a, pokestopQueue, config.speedMs, config.hashingKey, proxy))
-  workers.forEach(async w => {
-    await w.init()
-    w.start()
-  })
+  
+  await Promise.all(workers.map( async (w) => await w.init()))
+  await Promise.all(workers.map( async (w) => await w.start()))
 
   const checkStatusInterval = setInterval(() => {
     if (workers.every(w => !w.isActive)) {
@@ -27,7 +26,6 @@ async function Main(params) {
     }
   }, 1000)
 }
-
 
 class Queue {
   constructor(items) {

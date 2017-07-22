@@ -10,7 +10,7 @@ async function initClient(username, password, hashingKey, proxy) {
 		hashingKey: hashingKey,
 		useHashingServer: true,
     proxy: proxy,
-    version: 6702
+    version: 6900
 	})
 
 	await client.init()
@@ -53,7 +53,7 @@ async function checkIfLured(client, pokestop) {
 }
 
 async function placeLure(client, pokestop) {
-  let modifierResponse = true // await client.addFortModifier(POGOProtos.Inventory.Item.ItemId.ITEM_TROY_DISK, pokestop.pokestop_id)
+  let modifierResponse = await client.addFortModifier(POGOProtos.Inventory.Item.ItemId.ITEM_TROY_DISK, pokestop.pokestop_id)
   return modifierResponse
 }
 
