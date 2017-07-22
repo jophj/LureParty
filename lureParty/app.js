@@ -14,7 +14,9 @@ async function Main(params) {
   const pokestopQueue = new Queue(pokestops)
 
   const proxy = proxyManager.getProxy()
-  const workers = accounts.map(a => new Worker(a, pokestopQueue, config.speedMs, config.hashingKey, proxy))
+  const workers = accounts.map((a, i) =>
+    new Worker(a, pokestopQueue, config.speedMs, config.hashingKey[i % config.hashingKey.length], proxy)
+  )
   
   await Promise.all(workers.map( async (w) => await w.init()))
   await Promise.all(workers.map( async (w) => await w.start()))

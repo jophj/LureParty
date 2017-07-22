@@ -81,6 +81,8 @@ async function startFarmingUntil(client, expToGain, speedMs) {
   while (stateMachine.currentState !== 'end') {
 
     console.log(`${client.options.username} State: ${stateMachine.currentState}`)
+    await Promise.delay(Math.random() * 500 + 200)
+    
 
     if (botData.wildPokemons.length + botData.forts.length === 0) {
       console.log('ERROR: received no items from scan. Try to lower request rate')
