@@ -8,9 +8,10 @@ async function initClient(username, password, hashingKey, proxy) {
 		username: username,
 		password: password,
 		hashingKey: hashingKey,
-		useHashingServer: true,
+    useHashingServer: true,
+    hashingServer: ' http://hash.goman.io/',
     proxy: proxy,
-    version: 6900
+    version: 7301
 	})
 
 	await client.init()
