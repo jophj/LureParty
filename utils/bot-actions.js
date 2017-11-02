@@ -20,6 +20,7 @@ async function initClient(username, password, hashingKey, proxy) {
 		.checkChallenge()
 		.batchCall()
 
+  let asd = await client.getPlayerProfile('AMindJoke')
   return client
 }
 

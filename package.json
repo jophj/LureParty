@@ -6,6 +6,7 @@
   "dependencies": {
     "bluebird": "^3.5.1",
     "geolib": "^2.0.24",
+    "node-pogo-protos-vnext": "^2.17.0",
     "pogobuf-vnext": "^2.5.3",
     "point-in-polygon": "^1.0.1"
   },
