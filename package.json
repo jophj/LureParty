@@ -4,9 +4,9 @@
   "description": "Place lures everywhere!",
   "main": "app.js",
   "dependencies": {
-    "bluebird": "^3.5.0",
-    "geolib": "^2.0.23",
-    "pogobuf-vnext": "^2.5.1",
+    "bluebird": "^3.5.1",
+    "geolib": "^2.0.24",
+    "pogobuf-vnext": "^2.5.3",
     "point-in-polygon": "^1.0.1"
   },
   "devDependencies": {},
