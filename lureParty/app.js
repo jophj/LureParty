@@ -1,10 +1,11 @@
 const inside = require('point-in-polygon')
-const allPokestops = require('./pokestops.json')
-const accountManager = require('./account-manager')
+const allPokestops = require('../pokestops.json')
+const accountManager = require('../utils/account-manager')
+const proxyManager = require('../utils/proxy-manager')
 const Worker = require('./worker')
 
-const config = require('./config.json')
-const geoFence = require('./geofences.json')[config.geoFence || 'default']
+const config = require('../config.json')
+const geoFence = require('../geofences.json')[config.geoFence || 'default']
 
 async function Main(params) {
   let accounts = await accountManager.importAccounts('accounts.csv')
@@ -12,11 +13,13 @@ async function Main(params) {
   const pokestops = allPokestops.filter(p => inside([p.latitude, p.longitude], geoFence))
   const pokestopQueue = new Queue(pokestops)
 
-  const workers = accounts.map(a => new Worker(a, pokestopQueue, config.speedMs))
-  workers.forEach(async w => {
-    await w.init()
-    w.start()
-  })
+  const proxy = proxyManager.getProxy()
+  const workers = accounts.map((a, i) =>
+    new Worker(a, pokestopQueue, config.speedMs, config.hashingKey[i % config.hashingKey.length], proxy)
+  )
+  
+  await Promise.all(workers.map( async (w) => await w.init()))
+  await Promise.all(workers.map( async (w) => await w.start()))
 
   const checkStatusInterval = setInterval(() => {
     if (workers.every(w => !w.isActive)) {
@@ -25,7 +28,6 @@ async function Main(params) {
     }
   }, 1000)
 }
-
 
 class Queue {
   constructor(items) {

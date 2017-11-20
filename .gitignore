@@ -3,4 +3,4 @@ accounts.csv
 config.json
 geofences.json
 pokestops.json
-launch.json
+/.vscode/

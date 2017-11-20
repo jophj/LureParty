@@ -5,8 +5,14 @@
   "main": "app.js",
   "dependencies": {
     "bluebird": "^3.5.0",
+<<<<<<< HEAD
     "geolib": "^2.0.22",
-    "pogobuf-vnext": "^2.1.1",
+    "node-pogo-protos-vnext": "^2.13.0",
+    "pogobuf-vnext": "^2.3.8",
+=======
+    "geolib": "^2.0.23",
+    "pogobuf-vnext": "^2.5.1",
+>>>>>>> origin/leveling
     "point-in-polygon": "^1.0.1"
   },
   "devDependencies": {},
