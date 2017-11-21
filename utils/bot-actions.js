@@ -3,24 +3,19 @@ const POGOProtos = require('node-pogo-protos-vnext')
 const utils = require('./utils')
 
 async function initClient(username, password, hashingKey, proxy) {
-  let client = new pogobuf.Client({
-		authType: 'ptc',
-		username: username,
-		password: password,
-		hashingKey: hashingKey,
+  const login = new pogobuf.PTCLogin()
+  const authToken = await login.login(username, password)
+  const client = new pogobuf.Client({
+    authToken, authToken,
+    appSimulation: true,
+    version: 7701,
+    hashingKey: hashingKey,
     useHashingServer: true,
-    hashingServer: ' http://hash.goman.io/',
+    hashingServer: 'http://hash.goman.io/',
     proxy: proxy
-	})
+  })
 
 	await client.init()
-	let player = await client.getPlayer('US', 'en', 'Europe/Paris')
-	let response = await client.batchStart()
-		.downloadRemoteConfigVersion(POGOProtos.Enums.Platform.IOS, '', '', '', 6301)
-		.checkChallenge()
-		.batchCall()
-
-  let asd = await client.getPlayerProfile('AMindJoke')
   return client
 }
 
